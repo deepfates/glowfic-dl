@@ -1,6 +1,6 @@
-# Glowfic Downloader (TypeScript port)
+# glowfic-dl
 
-Minimal TypeScript port that downloads Glowfic threads, sections, and boards and outputs JSON compatible with the Python version's JSON.
+Minimal TypeScript port of https://github.com/rocurley/glowfic-dl that downloads Glowfic threads, sections, and boards and outputs JSON compatible with the Python version's JSON.
 
 ## Install
 
