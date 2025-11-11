@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { dirname, join } from "node:path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -9,7 +10,7 @@ type Format = "json";
 
 const argv = await yargs(hideBin(process.argv))
   .scriptName("glowfic-dl-ts")
-  .usage("$0 <url> [options]")
+  .usage("$0 <urls...> [options]")
   .positional("url", {
     describe: "Glowfic thread, section, or board URL",
     type: "string",
@@ -26,55 +27,207 @@ const argv = await yargs(hideBin(process.argv))
     describe: "output file path; default based on title",
     type: "string",
   })
+  .option("output-dir", {
+    describe: "directory to write outputs when passing multiple URLs",
+    type: "string",
+  })
+  .option("stdout", {
+    describe: "write JSON to stdout instead of a file",
+    type: "boolean",
+    default: false,
+  })
+  .option("dry-run", {
+    describe: "print what would be downloaded and where; no writes",
+    type: "boolean",
+    default: false,
+  })
+  .option("force", {
+    describe: "overwrite existing files",
+    type: "boolean",
+    default: false,
+  })
+  .option("concurrency", {
+    describe: "number of parallel downloads when passing multiple URLs",
+    type: "number",
+    default: 4,
+  })
   .help()
   .parse();
 
-async function writeJson(path: string, data: unknown) {
+async function writeJson(path: string, data: unknown, opts: { force: boolean }) {
   const fs = await import("node:fs/promises");
+  const dir = dirname(path);
+  if (dir) {
+    await fs.mkdir(dir, { recursive: true });
+  }
+  if (!opts.force) {
+    try {
+      await fs.stat(path);
+      throw new Error(`Refusing to overwrite existing file without --force: ${path}`);
+    } catch {
+      // ENOENT -> ok to write
+    }
+  }
   await fs.writeFile(path, JSON.stringify(data, null, 2), { encoding: "utf-8" });
 }
 
 async function main() {
-  const url = argv._[0] as string;
+  const urls = (argv._ as Array<string | number | symbol>).map(String).filter(Boolean);
   const format = argv.format as Format;
   if (format !== "json") throw new Error("Only JSON output is implemented.");
+  if (urls.length === 0) {
+    throw new Error("At least one URL is required. Usage: glowfic-dl-ts <urls...> [options]");
+  }
 
-  if (/\/posts\//.test(url)) {
-    const t = await fetchThread(url);
-    const path = argv.output ?? makeFilenameValidForEpub3(`${t.title}.json`);
-    await writeJson(path, t);
-    console.log(`Saved JSON to ${path}`);
-    return;
+  const outDirOpt =
+    (argv["output-dir"] as string | undefined) ??
+    (urls.length > 1 ? (argv.output as string | undefined) : undefined);
+  const toStdout = Boolean(argv.stdout);
+  const dryRun = Boolean(argv["dry-run"]);
+  const force = Boolean(argv.force);
+  const concurrency = Math.max(1, Number(argv.concurrency ?? 4));
+
+  function detectKind(url: string): "thread" | "section" | "board" | "unknown" {
+    if (/\/posts\//.test(url)) return "thread";
+    if (/\/board_sections\//.test(url)) return "section";
+    if (/\/boards\//.test(url)) return "board";
+    return "unknown";
   }
-  if (/\/board_sections\//.test(url)) {
-    const s = await fetchSection(url);
-    const path = argv.output ?? makeFilenameValidForEpub3(`${s.title ?? "section"}.json`);
-    await writeJson(path, s);
-    console.log(`Saved JSON to ${path}`);
-    return;
+
+  function idFromUrl(url: string): string {
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split("/").filter(Boolean);
+      return parts[parts.length - 1] ?? "";
+    } catch {
+      return "";
+    }
   }
-  if (/\/boards\//.test(url)) {
-    const b = await fetchBoard(url);
-    const path = argv.output ?? makeFilenameValidForEpub3(`${b.title}.json`);
-    await writeJson(path, b);
-    console.log(`Saved JSON to ${path}`);
-    return;
+
+  function defaultNameFromUrl(url: string): string {
+    const kind = detectKind(url);
+    const id = idFromUrl(url) || "unknown";
+    if (kind === "thread") return `thread-${id}.json`;
+    if (kind === "section") return `section-${id}.json`;
+    if (kind === "board") return `board-${id}.json`;
+    return `glowfic-${id}.json`;
   }
-  // Fallback: detect automatically
-  const s = await fetchStructure(url);
-  if (s.kind === "thread") {
-    const path = argv.output ?? makeFilenameValidForEpub3(`${s.thread.title}.json`);
-    await writeJson(path, s.thread);
-    console.log(`Saved JSON to ${path}`);
-  } else if (s.kind === "section") {
-    const path = argv.output ?? makeFilenameValidForEpub3(`${s.section.title ?? "section"}.json`);
-    await writeJson(path, s.section);
-    console.log(`Saved JSON to ${path}`);
-  } else {
-    const path = argv.output ?? makeFilenameValidForEpub3(`${s.board.title}.json`);
-    await writeJson(path, s.board);
-    console.log(`Saved JSON to ${path}`);
+
+  const limit = (function pLimit(n: number) {
+    let active = 0;
+    const queue: Array<() => void> = [];
+    const next = () => {
+      active--;
+      const fn = queue.shift();
+      if (fn) fn();
+    };
+    return async function run<T>(fn: () => Promise<T>): Promise<T> {
+      if (active >= n) {
+        await new Promise<void>((resolve) => queue.push(resolve));
+      }
+      active++;
+      try {
+        return await fn();
+      } finally {
+        next();
+      }
+    };
+  })(concurrency);
+
+  async function processUrl(url: string): Promise<void> {
+    if (dryRun) {
+      if (toStdout) {
+        console.log(`[dry-run] ${url} -> stdout`);
+        return;
+      }
+      const base = defaultNameFromUrl(url);
+      const outPath = outDirOpt
+        ? join(outDirOpt, base)
+        : urls.length === 1 && typeof argv.output === "string" && argv.output
+          ? (argv.output as string)
+          : makeFilenameValidForEpub3(base);
+      console.log(`[dry-run] ${url} -> ${outPath}`);
+      return;
+    }
+
+    const kind = detectKind(url);
+    if (kind === "thread") {
+      const t = await fetchThread(url);
+      const data = t;
+      if (toStdout) {
+        process.stdout.write(`${JSON.stringify(data)}\n`);
+        return;
+      }
+      const base = makeFilenameValidForEpub3(`${t.title}.json`);
+      const outPath = outDirOpt
+        ? join(outDirOpt, base)
+        : urls.length === 1 && typeof argv.output === "string" && argv.output
+          ? (argv.output as string)
+          : base;
+      await writeJson(outPath, data, { force });
+      console.log(`Saved JSON to ${outPath}`);
+      return;
+    }
+    if (kind === "section") {
+      const s = await fetchSection(url);
+      const data = s;
+      if (toStdout) {
+        process.stdout.write(`${JSON.stringify(data)}\n`);
+        return;
+      }
+      const base = makeFilenameValidForEpub3(`${s.title ?? "section"}.json`);
+      const outPath = outDirOpt
+        ? join(outDirOpt, base)
+        : urls.length === 1 && typeof argv.output === "string" && argv.output
+          ? (argv.output as string)
+          : base;
+      await writeJson(outPath, data, { force });
+      console.log(`Saved JSON to ${outPath}`);
+      return;
+    }
+    if (kind === "board") {
+      const b = await fetchBoard(url);
+      const data = b;
+      if (toStdout) {
+        process.stdout.write(`${JSON.stringify(data)}\n`);
+        return;
+      }
+      const base = makeFilenameValidForEpub3(`${b.title}.json`);
+      const outPath = outDirOpt
+        ? join(outDirOpt, base)
+        : urls.length === 1 && typeof argv.output === "string" && argv.output
+          ? (argv.output as string)
+          : base;
+      await writeJson(outPath, data, { force });
+      console.log(`Saved JSON to ${outPath}`);
+      return;
+    }
+
+    // Unknown: autodetect by probing
+    const any = await fetchStructure(url);
+    const data =
+      any.kind === "thread" ? any.thread : any.kind === "section" ? any.section : any.board;
+    if (toStdout) {
+      process.stdout.write(`${JSON.stringify(data)}\n`);
+      return;
+    }
+    const base = makeFilenameValidForEpub3(
+      any.kind === "thread"
+        ? `${any.thread.title}.json`
+        : any.kind === "section"
+          ? `${any.section.title ?? "section"}.json`
+          : `${any.board.title}.json`,
+    );
+    const outPath = outDirOpt
+      ? join(outDirOpt, base)
+      : urls.length === 1 && typeof argv.output === "string" && argv.output
+        ? (argv.output as string)
+        : base;
+    await writeJson(outPath, data, { force });
+    console.log(`Saved JSON to ${outPath}`);
   }
+
+  await Promise.all(urls.map((u) => limit(() => processUrl(u))));
 }
 
 main().catch((err) => {
