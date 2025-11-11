@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import ora from "ora";
 import yargs from "yargs";
 
 import { fetchStructure, fetchBoard, fetchSection, fetchThread } from "./index.js";
+import { threadToMarkdown, sectionToMarkdown, boardToMarkdown } from "./transform.js";
 import { makeFilenameValidForEpub3 } from "./util.js";
 
 type Format = "json";
@@ -74,6 +76,16 @@ export async function runCli(args: readonly string[]) {
       type: "number",
       default: 4,
     })
+    .option("progress", {
+      describe:
+        "show a single spinner while processing (default on in TTY unless --stdout or --dry-run)",
+      type: "boolean",
+    })
+    .option("markdown", {
+      describe: "convert post content HTML to Markdown before saving",
+      type: "boolean",
+      default: false,
+    })
     .help()
     .parse();
   const urls = (argv._ as Array<string | number | symbol>).map(String).filter(Boolean);
@@ -90,6 +102,10 @@ export async function runCli(args: readonly string[]) {
   const dryRun = Boolean(argv["dry-run"]);
   const force = Boolean(argv.force);
   const concurrency = Math.max(1, Number(argv.concurrency ?? 4));
+  const markdown = Boolean(argv.markdown);
+  const progressFlag = argv.progress as boolean | undefined;
+  const progressEnabled = progressFlag ?? (process.stdout.isTTY && !toStdout && !dryRun);
+  const spinner = progressEnabled ? ora({ text: "Processing..." }).start() : null;
 
   function detectKind(url: string): "thread" | "section" | "board" | "unknown" {
     if (/\/posts\//.test(url)) return "thread";
@@ -157,7 +173,7 @@ export async function runCli(args: readonly string[]) {
     const kind = detectKind(url);
     if (kind === "thread") {
       const t = await fetchThread(url);
-      const data = t;
+      const data = markdown ? threadToMarkdown(t) : t;
       if (toStdout) {
         process.stdout.write(`${JSON.stringify(data)}\n`);
         return;
@@ -174,7 +190,7 @@ export async function runCli(args: readonly string[]) {
     }
     if (kind === "section") {
       const s = await fetchSection(url);
-      const data = s;
+      const data = markdown ? sectionToMarkdown(s) : s;
       if (toStdout) {
         process.stdout.write(`${JSON.stringify(data)}\n`);
         return;
@@ -191,7 +207,7 @@ export async function runCli(args: readonly string[]) {
     }
     if (kind === "board") {
       const b = await fetchBoard(url);
-      const data = b;
+      const data = markdown ? boardToMarkdown(b) : b;
       if (toStdout) {
         process.stdout.write(`${JSON.stringify(data)}\n`);
         return;
@@ -232,6 +248,7 @@ export async function runCli(args: readonly string[]) {
   }
 
   await Promise.all(urls.map((u) => limit(() => processUrl(u))));
+  if (spinner) spinner.succeed("Done");
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -4,6 +4,14 @@ export {
   parseBoard as fetchBoard,
 } from "./parse.js";
 export * from "./types.js";
+export {
+  createTurndown,
+  htmlToMarkdown,
+  postToMarkdown,
+  threadToMarkdown,
+  sectionToMarkdown,
+  boardToMarkdown,
+} from "./transform.js";
 import { parseBoard, parseSection, parseThread } from "./parse.js";
 import type { BookStructure } from "./types.js";
 
