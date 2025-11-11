@@ -1,6 +1,6 @@
 {
   "name": "glowfic-dl-ts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,8 @@
     }
   },
   "bin": {
-    "glowfic-dl-ts": "dist/cli.js"
+    "glowfic-dl-ts": "dist/cli.js",
+    "glowfic-dl": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
