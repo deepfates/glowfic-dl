@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+
 import { fetchStructure, fetchBoard, fetchSection, fetchThread } from "./index.js";
 import { makeFilenameValidForEpub3 } from "./util.js";
 
@@ -9,17 +10,21 @@ type Format = "json";
 const argv = await yargs(hideBin(process.argv))
   .scriptName("glowfic-dl-ts")
   .usage("$0 <url> [options]")
-  .positional("url", { describe: "Glowfic thread, section, or board URL", type: "string", demandOption: true })
+  .positional("url", {
+    describe: "Glowfic thread, section, or board URL",
+    type: "string",
+    demandOption: true,
+  })
   .option("format", {
     alias: "f",
     describe: "output format",
     choices: ["json"] as const,
-    default: "json"
+    default: "json",
   })
   .option("output", {
     alias: "o",
     describe: "output file path; default based on title",
-    type: "string"
+    type: "string",
   })
   .help()
   .parse();

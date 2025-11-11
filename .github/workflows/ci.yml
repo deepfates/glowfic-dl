@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build, Lint, and Smoke Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Prettier check
+        run: npm run format:check
+
+      - name: Smoke test (fetch a thread JSON)
+        run: |
+          node dist/cli.js https://glowfic.com/posts/5506 -o /tmp/thread.json
+          test -f /tmp/thread.json
+          node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('/tmp/thread.json','utf8')); if(!j || typeof j.title !== 'string' || !j.title.length){ console.error('Invalid thread JSON'); process.exit(1);} console.log('Thread title:', j.title);"
+        timeout-minutes: 5

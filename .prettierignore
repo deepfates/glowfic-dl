@@ -1,0 +1,32 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore build outputs
+dist/
+build/
+
+# Test coverage
+coverage/
+
+# TypeScript incremental metadata
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS/Editor cruft
+.DS_Store
+*.swp
+
+# Lockfiles (not formatted by Prettier)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Minified or generated bundles
+*.min.*
+*.bundle.*

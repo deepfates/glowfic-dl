@@ -14,7 +14,15 @@ Node 18+ recommended.
 ## Programmatic usage (library)
 
 ```ts
-import { fetchThread, fetchSection, fetchBoard, fetchStructure, Thread, Section, Board } from "glowfic-dl-ts";
+import {
+  fetchThread,
+  fetchSection,
+  fetchBoard,
+  fetchStructure,
+  Thread,
+  Section,
+  Board,
+} from "glowfic-dl-ts";
 
 // Thread
 const t: Thread = await fetchThread("https://glowfic.com/posts/5506");

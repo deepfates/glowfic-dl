@@ -1,4 +1,4 @@
-import { Board, Section, Thread } from "./types.js";
+import type { Board, Section, Thread } from "./types.js";
 
 export function asBoardJson(board: Board): Board {
   return board;

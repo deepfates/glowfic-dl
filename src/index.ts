@@ -1,4 +1,8 @@
-export { parseThread as fetchThread, parseSection as fetchSection, parseBoard as fetchBoard } from "./parse.js";
+export {
+  parseThread as fetchThread,
+  parseSection as fetchSection,
+  parseBoard as fetchBoard,
+} from "./parse.js";
 export * from "./types.js";
 import { parseBoard, parseSection, parseThread } from "./parse.js";
 import type { BookStructure } from "./types.js";
@@ -20,11 +24,15 @@ export async function fetchStructure(url: string): Promise<BookStructure> {
   try {
     const thread = await parseThread(url);
     return { kind: "thread", thread };
-  } catch {}
+  } catch (_err) {
+    void _err;
+  }
   try {
     const section = await parseSection(url);
     return { kind: "section", section };
-  } catch {}
+  } catch (_err) {
+    void _err;
+  }
   const board = await parseBoard(url);
   return { kind: "board", board };
 }

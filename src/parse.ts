@@ -1,6 +1,8 @@
 import * as cheerio from "cheerio";
-import { GLOWFIC_ROOT, Post, Thread, Section, Board } from "./types.js";
+
 import { getText } from "./fetch.js";
+import { GLOWFIC_ROOT } from "./types.js";
+import type { Post, Thread, Section, Board } from "./types.js";
 
 function abs(url: string): string {
   try {
@@ -18,9 +20,7 @@ function textOrNull(s: string | undefined | null): string | null {
 function extractPostId($post: cheerio.Cheerio<any>): string {
   const idAttr = $post.attr("id");
   if (idAttr) return idAttr;
-  const $permImg = $post
-    .find("img[title='Permalink'][alt='Permalink']")
-    .first();
+  const $permImg = $post.find("img[title='Permalink'][alt='Permalink']").first();
   const href = $permImg.parent().attr("href") || "";
   try {
     const u = new URL(href, GLOWFIC_ROOT);
@@ -30,7 +30,9 @@ function extractPostId($post: cheerio.Cheerio<any>): string {
       if (parts[0] === "posts") return `post-${parts[1]}`;
       if (parts[0] === "replies") return `reply-${parts[1]}`;
     }
-  } catch {}
+  } catch (_err) {
+    void _err;
+  }
   return "";
 }
 
@@ -41,17 +43,11 @@ function extractTimestamp($post: cheerio.Cheerio<any>): string | null {
   if ($time.attr("datetime")) ts = $time.attr("datetime")!;
   if (!ts && $time.attr("title")) ts = $time.attr("title")!;
   if (!ts) {
-    const $abbr = ($footer.length ? $footer : $post)
-      .find("abbr[title]")
-      .first();
+    const $abbr = ($footer.length ? $footer : $post).find("abbr[title]").first();
     if ($abbr.length) ts = $abbr.attr("title") || null;
   }
   if (!ts) {
-    const t = $post
-      .find(".post-time, .timestamp, .post-footer .post-posted")
-      .first()
-      .text()
-      .trim();
+    const t = $post.find(".post-time, .timestamp, .post-footer .post-posted").first().text().trim();
     if (t) ts = t;
   }
   return ts ? ts.trim() : null;
@@ -107,8 +103,7 @@ export async function parseThread(threadUrl: string): Promise<Thread> {
   const html = await getText(threadUrl, { view: "flat", style: "classic" });
   const $ = cheerio.load(html);
   const title =
-    $("th.table-title, #post-title").first().text().trim() ||
-    $("title").first().text().trim();
+    $("th.table-title, #post-title").first().text().trim() || $("title").first().text().trim();
   const description = textOrNull($("td.written-content").first().text());
   const $posts = $("div.post-container");
   const posts: Post[] = [];
@@ -190,9 +185,7 @@ export async function parseSection(sectionUrl: string): Promise<Section> {
 export async function parseBoard(boardUrl: string): Promise<Board> {
   const html = await getText(boardUrl);
   const $ = cheerio.load(html);
-  const title =
-    $("th.table-title").first().text().trim() ||
-    $("title").first().text().trim();
+  const title = $("th.table-title").first().text().trim() || $("title").first().text().trim();
   const rows = $("#content tr");
   type TmpSec = {
     title: string | null;

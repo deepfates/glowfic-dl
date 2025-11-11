@@ -1,4 +1,4 @@
-const FILENAME_BANNED_CHARS = '/\\\"*:<>?|\\u007f';
+const FILENAME_BANNED_CHARS = '/\\":<>?|\u007f';
 
 const FILENAME_BANNED_CHAR_RANGES: Array<[number, number]> = [
   [0x0000, 0x001f],
@@ -8,7 +8,7 @@ const FILENAME_BANNED_CHAR_RANGES: Array<[number, number]> = [
   [0xfff0, 0xffff],
   [0xe0000, 0xe0fff],
   [0xf0000, 0xfffff],
-  [0x100000, 0x10ffff]
+  [0x100000, 0x10ffff],
 ];
 
 export function makeFilenameValidForEpub3(filename: string): string {
@@ -30,7 +30,7 @@ export function makeFilenameValidForEpub3(filename: string): string {
   }
   if (filtered.length === 0) {
     throw new Error(
-      "Attempted to put file into EPUB with filename containing only invalid characters and/or periods."
+      "Attempted to put file into EPUB with filename containing only invalid characters and/or periods.",
     );
   }
   const encoder = new TextEncoder();
