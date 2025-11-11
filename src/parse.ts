@@ -61,7 +61,9 @@ function extractCharacter($post: cheerio.Cheerio<any>): {
   if (info.length) {
     const disp = textOrNull(info.find(".post-character").first().text());
     const handle = textOrNull(info.find(".post-screenname").first().text());
-    return { display: disp, handle };
+    if (disp || handle) {
+      return { display: disp, handle };
+    }
   }
   const header = $post.find(".post-header").first();
   if (header.length) {

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sample Thread Title</title>
+  </head>
+  <body>
+    <table id="thread-header">
+      <tr>
+        <th class="table-title">Sample Thread Title</th>
+      </tr>
+      <tr>
+        <td class="written-content">A simple thread used for parser tests.</td>
+      </tr>
+    </table>
+
+    <div id="posts">
+      <!-- Post 1: has explicit element id -->
+      <div class="post-container" id="post-1001">
+        <div class="post-header">
+          <span class="post-character">Character One</span>
+          <span class="post-screenname">@charone</span>
+        </div>
+
+        <div class="post-info">
+          <div class="post-info-text">
+            <span class="post-author">Author One</span>
+          </div>
+        </div>
+
+        <div class="icon">
+          <img class="icon" src="/icons/char1.png" alt="Character One Icon" />
+        </div>
+
+        <div class="post-content">
+          <p>Hello world. This is the first post.</p>
+        </div>
+
+        <div class="post-footer">
+          <a href="https://glowfic.com/posts/1001#post-1001" class="permalink">
+            <img src="/img/perm.png" title="Permalink" alt="Permalink" />
+          </a>
+          <span class="post-posted">
+            <time datetime="2021-01-01T12:00:00Z" title="2021-01-01 12:00:00 UTC">
+              Jan 1, 2021
+            </time>
+          </span>
+        </div>
+      </div>
+
+      <!-- Post 2: no id attribute, permalink should provide fallback -->
+      <div class="post-container">
+        <div class="post-header">
+          <span class="post-character">Character Two</span>
+          <span class="post-screenname">@chartwo</span>
+        </div>
+
+        <div class="post-info">
+          <div class="post-info-text">
+            <span class="post-author">Author Two</span>
+          </div>
+        </div>
+
+        <img class="icon" src="https://cdn.example.com/icons/char2.jpg" alt="Character Two Icon" />
+
+        <div class="post-content">
+          <p>Replying with some content and a link <a href="https://example.com">out</a>.</p>
+        </div>
+
+        <div class="post-footer">
+          <a href="/replies/1002#reply-1002" class="permalink">
+            <img src="/img/perm.png" title="Permalink" alt="Permalink" />
+          </a>
+          <span class="timestamp">
+            <abbr title="2021-01-02 08:30:00 UTC">Jan 2, 2021</abbr>
+          </span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
