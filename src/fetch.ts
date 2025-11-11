@@ -16,7 +16,7 @@ export async function httpGet(
   return fetch(fullUrl.toString(), {
     redirect: "follow",
     headers: {
-      "User-Agent": "glowfic-dl-ts/0.1",
+      "User-Agent": "glowfic-dl/0.2.0",
     },
   });
 }

@@ -22,7 +22,7 @@ import {
   Thread,
   Section,
   Board,
-} from "glowfic-dl-ts";
+} from "glowfic-dl";
 
 // Thread
 const t: Thread = await fetchThread("https://glowfic.com/posts/5506");

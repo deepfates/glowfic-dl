@@ -34,7 +34,7 @@ async function writeJson(path: string, data: unknown, opts: { force: boolean }) 
 
 export async function runCli(args: readonly string[]) {
   const argv = await yargs(args)
-    .scriptName("glowfic-dl-ts")
+    .scriptName("glowfic-dl")
     .usage("$0 <urls...> [options]")
     .positional("url", {
       describe: "Glowfic thread, section, or board URL",
@@ -92,7 +92,7 @@ export async function runCli(args: readonly string[]) {
   const format = argv.format as Format;
   if (format !== "json") throw new Error("Only JSON output is implemented.");
   if (urls.length === 0) {
-    throw new Error("At least one URL is required. Usage: glowfic-dl-ts <urls...> [options]");
+    throw new Error("At least one URL is required. Usage: glowfic-dl <urls...> [options]");
   }
 
   const outDirOpt =
