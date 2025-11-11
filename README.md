@@ -4,12 +4,31 @@ Minimal TypeScript port that downloads Glowfic threads, sections, and boards and
 
 ## Install
 
+For the CLI (global):
+
 ```
-npm install
-npm run build
+npm install -g glowfic-dl
 ```
 
-Node 18+ recommended.
+Then run:
+
+```
+glowfic-dl <urls...> [options]
+```
+
+Or use npx (no global install required):
+
+```
+npx glowfic-dl <urls...> [options]
+```
+
+For programmatic/library use:
+
+```
+npm install glowfic-dl
+```
+
+Node 18+ required.
 
 ## Programmatic usage (library)
 
@@ -45,23 +64,23 @@ if (any.kind === "thread") {
 Usage:
 
 ```
-node dist/cli.js <urls...> [options]
+glowfic-dl <urls...> [options]
 ```
 
 Examples:
 
 ```
 # Write a single thread to stdout
-node dist/cli.js https://glowfic.com/posts/5506 --stdout
+glowfic-dl https://glowfic.com/posts/5506 --stdout
 
 # Dry-run multiple URLs into an output directory
-node dist/cli.js https://glowfic.com/posts/5506 https://glowfic.com/boards/215 --output-dir out --dry-run
+glowfic-dl https://glowfic.com/posts/5506 https://glowfic.com/boards/215 --output-dir out --dry-run
 
 # Save to a specific file (overwrite if it exists)
-node dist/cli.js https://glowfic.com/posts/5506 -o out/thread.json --force
+glowfic-dl https://glowfic.com/posts/5506 -o out/thread.json --force
 
 # Fetch concurrently with 8 workers
-node dist/cli.js https://glowfic.com/board_sections/703 https://glowfic.com/boards/215 --output-dir out --concurrency 8
+glowfic-dl https://glowfic.com/board_sections/703 https://glowfic.com/boards/215 --output-dir out --concurrency 8
 ```
 
 Options:

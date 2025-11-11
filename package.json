@@ -1,7 +1,31 @@
 {
   "name": "glowfic-dl",
   "version": "0.2.1",
-  "private": true,
+  "private": false,
+  "description": "Download Glowfic threads, sections, and boards to JSON (Markdown by default).",
+  "author": "deepfates",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepfates/glowfic-dl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deepfates/glowfic-dl/issues"
+  },
+  "homepage": "https://github.com/deepfates/glowfic-dl#readme",
+  "keywords": [
+    "glowfic",
+    "downloader",
+    "json",
+    "markdown",
+    "cli",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
