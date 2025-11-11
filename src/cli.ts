@@ -53,7 +53,7 @@ export async function runCli(args: readonly string[]) {
       type: "string",
     })
     .option("output-dir", {
-      describe: "directory to write outputs when passing multiple URLs",
+      describe: "directory to write outputs (default: 'out' when not using -o or --stdout)",
       type: "string",
     })
     .option("stdout", {
@@ -82,9 +82,9 @@ export async function runCli(args: readonly string[]) {
       type: "boolean",
     })
     .option("markdown", {
-      describe: "convert post content HTML to Markdown before saving",
+      describe: "convert post content HTML to Markdown before saving (default: true)",
       type: "boolean",
-      default: false,
+      default: true,
     })
     .help()
     .parse();
@@ -97,7 +97,7 @@ export async function runCli(args: readonly string[]) {
 
   const outDirOpt =
     (argv["output-dir"] as string | undefined) ??
-    (urls.length > 1 ? (argv.output as string | undefined) : undefined);
+    (!argv.stdout && (!argv.output || urls.length > 1) ? "out" : undefined);
   const toStdout = Boolean(argv.stdout);
   const dryRun = Boolean(argv["dry-run"]);
   const force = Boolean(argv.force);

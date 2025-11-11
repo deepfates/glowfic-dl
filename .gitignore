@@ -1,2 +1,19 @@
 dist
 node_modules
+
+# Build outputs
+out/
+
+# Local scratch outputs accidentally committed
+project lawful and their oblivious boyfriend.json
+take this report back and bring her a better report.json
+
+# Logs and coverage
+*.log
+coverage/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# OS/editor files
+.DS_Store

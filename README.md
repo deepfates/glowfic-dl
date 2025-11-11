@@ -67,8 +67,9 @@ node dist/cli.js https://glowfic.com/board_sections/703 https://glowfic.com/boar
 Options:
 
 - `-o, --output <path>`: output file path (for a single URL). When passing multiple URLs, prefer `--output-dir`.
-- `--output-dir <dir>`: directory to write outputs when passing multiple URLs (filenames are derived from titles or fallbacks).
+- `--output-dir <dir>`: directory to write outputs (default: 'out' when not using `-o` or `--stdout`).
 - `-f, --format json`: output format (currently only JSON).
+- `--markdown`: convert post content HTML to Markdown before saving (default: true).
 - `--stdout`: write JSON to stdout instead of files (one JSON per URL; multiple URLs produce multiple lines).
 - `--dry-run`: print what would be downloaded and where, without writing anything.
 - `--force`: overwrite existing files if they already exist.
