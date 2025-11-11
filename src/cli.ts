@@ -1,58 +1,12 @@
 #!/usr/bin/env node
 import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
 
 import { fetchStructure, fetchBoard, fetchSection, fetchThread } from "./index.js";
 import { makeFilenameValidForEpub3 } from "./util.js";
 
 type Format = "json";
-
-const argv = await yargs(hideBin(process.argv))
-  .scriptName("glowfic-dl-ts")
-  .usage("$0 <urls...> [options]")
-  .positional("url", {
-    describe: "Glowfic thread, section, or board URL",
-    type: "string",
-    demandOption: true,
-  })
-  .option("format", {
-    alias: "f",
-    describe: "output format",
-    choices: ["json"] as const,
-    default: "json",
-  })
-  .option("output", {
-    alias: "o",
-    describe: "output file path; default based on title",
-    type: "string",
-  })
-  .option("output-dir", {
-    describe: "directory to write outputs when passing multiple URLs",
-    type: "string",
-  })
-  .option("stdout", {
-    describe: "write JSON to stdout instead of a file",
-    type: "boolean",
-    default: false,
-  })
-  .option("dry-run", {
-    describe: "print what would be downloaded and where; no writes",
-    type: "boolean",
-    default: false,
-  })
-  .option("force", {
-    describe: "overwrite existing files",
-    type: "boolean",
-    default: false,
-  })
-  .option("concurrency", {
-    describe: "number of parallel downloads when passing multiple URLs",
-    type: "number",
-    default: 4,
-  })
-  .help()
-  .parse();
 
 async function writeJson(path: string, data: unknown, opts: { force: boolean }) {
   const fs = await import("node:fs/promises");
@@ -64,14 +18,64 @@ async function writeJson(path: string, data: unknown, opts: { force: boolean }) 
     try {
       await fs.stat(path);
       throw new Error(`Refusing to overwrite existing file without --force: ${path}`);
-    } catch {
-      // ENOENT -> ok to write
+    } catch (err: any) {
+      if (err && (err as { code?: string }).code === "ENOENT") {
+        // File does not exist -> ok to write
+      } else {
+        // Re-throw other errors, including our intentional overwrite error
+        throw err;
+      }
     }
   }
   await fs.writeFile(path, JSON.stringify(data, null, 2), { encoding: "utf-8" });
 }
 
-async function main() {
+export async function runCli(args: readonly string[]) {
+  const argv = await yargs(args)
+    .scriptName("glowfic-dl-ts")
+    .usage("$0 <urls...> [options]")
+    .positional("url", {
+      describe: "Glowfic thread, section, or board URL",
+      type: "string",
+      demandOption: true,
+    })
+    .option("format", {
+      alias: "f",
+      describe: "output format",
+      choices: ["json"] as const,
+      default: "json",
+    })
+    .option("output", {
+      alias: "o",
+      describe: "output file path; default based on title",
+      type: "string",
+    })
+    .option("output-dir", {
+      describe: "directory to write outputs when passing multiple URLs",
+      type: "string",
+    })
+    .option("stdout", {
+      describe: "write JSON to stdout instead of a file",
+      type: "boolean",
+      default: false,
+    })
+    .option("dry-run", {
+      describe: "print what would be downloaded and where; no writes",
+      type: "boolean",
+      default: false,
+    })
+    .option("force", {
+      describe: "overwrite existing files",
+      type: "boolean",
+      default: false,
+    })
+    .option("concurrency", {
+      describe: "number of parallel downloads when passing multiple URLs",
+      type: "number",
+      default: 4,
+    })
+    .help()
+    .parse();
   const urls = (argv._ as Array<string | number | symbol>).map(String).filter(Boolean);
   const format = argv.format as Format;
   if (format !== "json") throw new Error("Only JSON output is implemented.");
@@ -230,7 +234,9 @@ async function main() {
   await Promise.all(urls.map((u) => limit(() => processUrl(u))));
 }
 
-main().catch((err) => {
-  console.error(err?.stack || String(err));
-  process.exit(1);
-});
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runCli(process.argv.slice(2)).catch((err) => {
+    console.error(err?.stack || String(err));
+    process.exit(1);
+  });
+}

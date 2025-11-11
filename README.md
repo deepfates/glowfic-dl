@@ -40,24 +40,39 @@ if (any.kind === "thread") {
 }
 ```
 
-## Usage
+## CLI
+
+Usage:
 
 ```
-node dist/cli.js <url> [-o output.json]
+node dist/cli.js <urls...> [options]
 ```
 
 Examples:
 
 ```
-node dist/cli.js https://glowfic.com/posts/5506
-node dist/cli.js https://glowfic.com/board_sections/703
-node dist/cli.js https://glowfic.com/boards/215
+# Write a single thread to stdout
+node dist/cli.js https://glowfic.com/posts/5506 --stdout
+
+# Dry-run multiple URLs into an output directory
+node dist/cli.js https://glowfic.com/posts/5506 https://glowfic.com/boards/215 --output-dir out --dry-run
+
+# Save to a specific file (overwrite if it exists)
+node dist/cli.js https://glowfic.com/posts/5506 -o out/thread.json --force
+
+# Fetch concurrently with 8 workers
+node dist/cli.js https://glowfic.com/board_sections/703 https://glowfic.com/boards/215 --output-dir out --concurrency 8
 ```
 
 Options:
 
-- `-o, --output <path>`: output file path (default: `<title>.json`, sanitized)
-- `-f, --format json`: output format (JSON only for now)
+- `-o, --output <path>`: output file path (for a single URL). When passing multiple URLs, prefer `--output-dir`.
+- `--output-dir <dir>`: directory to write outputs when passing multiple URLs (filenames are derived from titles or fallbacks).
+- `-f, --format json`: output format (currently only JSON).
+- `--stdout`: write JSON to stdout instead of files (one JSON per URL; multiple URLs produce multiple lines).
+- `--dry-run`: print what would be downloaded and where, without writing anything.
+- `--force`: overwrite existing files if they already exist.
+- `--concurrency <n>`: number of parallel downloads when passing multiple URLs (default: 4).
 
 Notes:
 
